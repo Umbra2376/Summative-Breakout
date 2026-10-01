@@ -1,9 +1,11 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Particle_Generator;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
+using System.Linq.Expressions;
 
 namespace Summative_Breakout
 {
@@ -11,15 +13,16 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D title;
-        Rectangle window;
+        Texture2D title, blockT, paddleT;
+        Rectangle window, paddleR;
         SpriteFont blockFont;
         float titleO;
         double titleTime;
         KeyboardState keyboardState;
-        MouseState mouseState;
         ParticleEngine particleEngine;
-        List<Texture2D> particles;
+        List<Texture2D> particles = new List<Texture2D>();
+        List<Block> blocks =  new List<Block>();
+        Paddle paddle;
         enum Screen
         {
             Title, Game, Win, Lose
@@ -37,9 +40,8 @@ namespace Summative_Breakout
             // TODO: Add your initialization logic here
             screen = Screen.Title;
             window = new Rectangle(0, 0, 845, 600);
-            particles = new List<Texture2D>();
+            paddleR = new Rectangle(325, 550, 100, 20);
             base.Initialize();
-            particleEngine = new ParticleEngine(particles, Vector2.Zero, false, true);
         }
 
         protected override void LoadContent()
@@ -51,8 +53,14 @@ namespace Summative_Breakout
             _graphics.ApplyChanges();
 
             title = Content.Load<Texture2D>("blockBreakerTitle");
+            paddleT = Content.Load<Texture2D>("paddle");
             blockFont = Content.Load<SpriteFont>("blockFont");
-            particles.Add(Content.Load<Texture2D>("brokenBlock"));
+            blockT = Content.Load<Texture2D>("tile");
+            CreateBlocks();
+            paddle = new Paddle(paddleT, paddleR, window);
+            particles = new List<Texture2D>();
+            particles.Add(Content.Load<Texture2D>("paddleFire"));
+            particleEngine = new ParticleEngine(particles, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
             // TODO: use this.Content to load your game content here
         }
 
@@ -80,13 +88,22 @@ namespace Summative_Breakout
             if (screen == Screen.Game)
             {
                 keyboardState = Keyboard.GetState();
-                mouseState = Mouse.GetState();
-                particleEngine.EmitterLocation = mouseState.Position.ToVector2();
-                particleEngine.Update();
-                if (mouseState.LeftButton == ButtonState.Pressed)
+                particleEngine.Enabled = false;
+                if (keyboardState.IsKeyDown(Keys.Left))
+                {
+                    paddle.MoveLeft();
                     particleEngine.Enabled = true;
-                else
-                    particleEngine.Enabled = false;
+                    particleEngine.EmitterLocation = new Vector2(paddle.Rect.Right, paddle.Rect.Center.Y);
+                    particleEngine.EmitterDirection = new Vector2(3, 0);
+                }
+                if (keyboardState.IsKeyDown(Keys.Right))
+                {
+                    paddle.MoveRight();
+                    particleEngine.Enabled = true;
+                    particleEngine.EmitterLocation = new Vector2(paddle.Rect.Left, paddle.Rect.Center.Y);
+                    particleEngine.EmitterDirection = new Vector2(-3, 0);
+                }
+                particleEngine.Update();
             }
             base.Update(gameTime);
         }
@@ -98,17 +115,48 @@ namespace Summative_Breakout
             // TODO: Add your drawing code here
             _spriteBatch.Begin();
 
-            if (screen == Screen.Title) 
+            if (screen == Screen.Title)
             {
                 _spriteBatch.Draw(title, window, Color.White);
                 _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.White * titleO);
             }
             else if (screen == Screen.Game)
             {
+                foreach (Block block in blocks)
+                {
+                    block.Draw(_spriteBatch);
+                }
                 particleEngine.Draw(_spriteBatch);
-            }    
-                _spriteBatch.End();
+                paddle.Draw(_spriteBatch);
+            }
+            _spriteBatch.End();
             base.Draw(gameTime);
+        }
+        private void CreateBlocks()
+        {
+            int rows = 8;
+            int columns = 13;
+            int brickWidth = 60;
+            int brickHeight = 25;
+            int spacing = 10;
+            int startX = 5;
+            int startY = 5;
+            for (int row = 0; row < rows; row++)
+            {
+                Color[] colors =
+                {
+                    Color.Red, Color.Orange, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Purple, Color.Pink
+                };
+                Color blockColor = colors[row];
+                for (int column = 0; column < columns; column++)
+                {
+                    int x = startX + column * (brickWidth + spacing);
+                    int y = startY + row * (brickHeight + spacing);
+                    Rectangle blockR = new Rectangle(x, y, brickWidth, brickHeight);
+                    Block block = new Block(blockT, blockR, blockColor);
+                    blocks.Add(block);
+                }
+            }
         }
     }
 }
