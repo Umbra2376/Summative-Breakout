@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Summative_Breakout;
 using System;
@@ -13,6 +13,7 @@ namespace Particle_Generator
     {
         private Random _generator;
         private Vector2 _emitterLocation { get; set; }
+        private Vector2 _emitterDirection;
         private float _gravity;
         private List<Particle> _particles;
         private List<Texture2D> _textures;
@@ -27,22 +28,22 @@ namespace Particle_Generator
             _generator = new Random();
             _enabled = enabled;
             _gravityEnabled = gravityEnabled;
+            _emitterDirection = Vector2.Zero;
         }
         private Particle GenerateNewParticle()
         {
             Texture2D texture = _textures[_generator.Next(_textures.Count)];
             Vector2 position = _emitterLocation;
-            Vector2 velocity = new Vector2(1f * (float)(_generator.NextDouble() * 2 - 1), 1f * (float)(_generator.NextDouble() * 2 - 1));
-            //Vector2 velocity = new Vector2(0, 0);
+            Vector2 velocity = new Vector2(_emitterDirection.X, (float)_generator.NextDouble() * 2 - 1);
             float angle = 0;
             float angularVelocity = 0.1f * (float)(_generator.NextDouble() * 2 - 1);
             Color color = new Color(
             (float)_generator.NextDouble(),
             (float)_generator.NextDouble(),
             (float)_generator.NextDouble());
-            int size = _generator.Next(5, 10);
-            int ttl = 100 + _generator.Next(40);
-            return new Particle(texture, position, velocity, angle, angularVelocity, color, size, ttl, _gravityEnabled);
+            int size = _generator.Next(10, 20);
+            int ttl = 5 + _generator.Next(40);
+            return new Particle(texture, position, velocity, angle, angularVelocity, Color.White, size, ttl, _gravityEnabled);
         }
         public void Draw(SpriteBatch spriteBatch)
         {
@@ -78,6 +79,11 @@ namespace Particle_Generator
         {
             get { return _emitterLocation; }
             set { _emitterLocation = value; }
+        }
+        public Vector2 EmitterDirection
+        {
+            get { return _emitterDirection; }
+            set { _emitterDirection = value; }
         }
     }
 }
