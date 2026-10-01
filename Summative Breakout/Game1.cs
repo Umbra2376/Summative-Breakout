@@ -1,7 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Particle_Generator;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Summative_Breakout
 {
@@ -9,15 +11,15 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D happyBallT, hitBallT, paddleT, blockT, title;
-        Rectangle window, paddleR;
+        Texture2D title;
+        Rectangle window;
         SpriteFont blockFont;
         float titleO;
         double titleTime;
         KeyboardState keyboardState;
-        List<Texture2D> blocksT = new List<Texture2D>();
-        List<Rectangle> blocksR = new List<Rectangle>();
-        Color blockColor;
+        MouseState mouseState;
+        ParticleEngine particleEngine;
+        List<Texture2D> particles;
         enum Screen
         {
             Title, Game, Win, Lose
@@ -34,9 +36,10 @@ namespace Summative_Breakout
         {
             // TODO: Add your initialization logic here
             screen = Screen.Title;
-            window = new Rectangle(0, 0, 800, 600);
-            paddleR = new Rectangle(340, 500, 80, 20);
+            window = new Rectangle(0, 0, 845, 600);
+            particles = new List<Texture2D>();
             base.Initialize();
+            particleEngine = new ParticleEngine(particles, Vector2.Zero, false, true);
         }
 
         protected override void LoadContent()
@@ -48,9 +51,8 @@ namespace Summative_Breakout
             _graphics.ApplyChanges();
 
             title = Content.Load<Texture2D>("blockBreakerTitle");
-            paddleT = Content.Load<Texture2D>("paddle");
             blockFont = Content.Load<SpriteFont>("blockFont");
-            blocksT.Add(Content.Load<Texture2D>("tile"));
+            particles.Add(Content.Load<Texture2D>("brokenBlock"));
             // TODO: use this.Content to load your game content here
         }
 
@@ -64,7 +66,7 @@ namespace Summative_Breakout
             {
                 keyboardState = Keyboard.GetState();
                 titleTime += gameTime.ElapsedGameTime.TotalSeconds;
-                if (titleTime >= 1)
+                if (titleTime >= 0.5)
                 {
                     titleO = titleO == 1 ? 0 : 1;
                     titleTime = 0;
@@ -74,6 +76,17 @@ namespace Summative_Breakout
                     titleTime = 0;
                     screen = Screen.Game;
                 }
+            }
+            if (screen == Screen.Game)
+            {
+                keyboardState = Keyboard.GetState();
+                mouseState = Mouse.GetState();
+                particleEngine.EmitterLocation = mouseState.Position.ToVector2();
+                particleEngine.Update();
+                if (mouseState.LeftButton == ButtonState.Pressed)
+                    particleEngine.Enabled = true;
+                else
+                    particleEngine.Enabled = false;
             }
             base.Update(gameTime);
         }
@@ -90,12 +103,11 @@ namespace Summative_Breakout
                 _spriteBatch.Draw(title, window, Color.White);
                 _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.White * titleO);
             }
-            if (screen == Screen.Game)
+            else if (screen == Screen.Game)
             {
-                _spriteBatch.Draw(paddleT, paddleR, Color.White);
-            }
-
-            _spriteBatch.End();
+                particleEngine.Draw(_spriteBatch);
+            }    
+                _spriteBatch.End();
             base.Draw(gameTime);
         }
     }
