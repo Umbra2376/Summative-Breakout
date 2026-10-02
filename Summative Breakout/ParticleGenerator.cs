@@ -42,7 +42,7 @@ namespace Particle_Generator
             (float)_generator.NextDouble(),
             (float)_generator.NextDouble());
             int size = _generator.Next(10, 20);
-            int ttl = 5 + _generator.Next(40);
+            int ttl = 1 + _generator.Next(20);
             return new Particle(texture, position, velocity, angle, angularVelocity, Color.White, size, ttl, _gravityEnabled);
         }
         public void Draw(SpriteBatch spriteBatch)
@@ -54,7 +54,7 @@ namespace Particle_Generator
         {
             if (_enabled)
             {
-                int total = 5;
+                int total = 3;
                 for (int i = 0; i < total; i++)
                 {
                     _particles.Add(GenerateNewParticle());

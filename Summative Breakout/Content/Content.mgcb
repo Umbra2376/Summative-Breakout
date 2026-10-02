@@ -13,6 +13,19 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin ballBreakout
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:ballBreakout
+
 #begin blockBreakerTitle.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -50,31 +63,19 @@
 /processorParam:Version=3.8.5.1
 /build:brokenBlock
 
-#begin happyBall.psd
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
+#begin Flamethrower.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
-/build:happyBall.psd
+/build:Flamethrower.mp3
 
-#begin hitBall.psd
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
+#begin mainblockTheme.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
-/build:hitBall.psd
+/build:mainblockTheme.mp3
 
 #begin paddle
 /importer:TextureImporter
@@ -89,6 +90,19 @@
 /processorParam:Version=3.8.5.1
 /build:paddle
 
+#begin paddleFire.psd
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:paddleFire.psd
+
 #begin tile.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -101,4 +115,11 @@
 /processorParam:TextureFormat=Color
 /processorParam:Version=3.8.5.1
 /build:tile.png
+
+#begin titleSong.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:titleSong.mp3
 
