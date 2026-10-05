@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace Summative_Breakout
 {
@@ -19,18 +20,17 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D title, blockT, paddleT, ballT;
+        Texture2D title, blockT, paddleT, ballT, lose, paddleFire, brokenBlock;
         Rectangle window, paddleR, ballR;
-        Vector2 ballS;
+        Vector2 ballS = new Vector2(5, -5);
         SpriteFont blockFont;
         SoundEffect paddleSound;
         SoundEffectInstance paddleInstance;
-        Song titleSong, mainSong;
-        float titleO;
+        Song titleSong, mainSong, loseSong;
+        float titleO, resetTime, blockTime;
         double titleTime;
         KeyboardState keyboardState;
-        ParticleEngine particleEngine;
-        List<Texture2D> particles = new List<Texture2D>();
+        ParticleEngine paddleEngine, blockEngine;
         List<Block> blocks =  new List<Block>();
         Paddle paddle;
         Ball ball;
@@ -55,8 +55,10 @@ namespace Summative_Breakout
             _graphics.ApplyChanges();
             base.Initialize();
             paddle = new Paddle(paddleT, paddleR, window);
-            ball = new Ball(ballT, ballR, ballS);
-            particleEngine = new ParticleEngine(particles, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
+            ball = new Ball(ballT, ballR, ballS, window);
+            paddleEngine = new ParticleEngine(paddleFire, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
+            blockEngine = new ParticleEngine(brokenBlock, new Vector2(3, 3), false, true);
+            blockEngine.TTL = 30;
         }
 
         protected override void LoadContent()
@@ -67,15 +69,17 @@ namespace Summative_Breakout
             paddleT = Content.Load<Texture2D>("paddle");
             blockFont = Content.Load<SpriteFont>("blockFont");
             blockT = Content.Load<Texture2D>("tile");
+            lose = Content.Load<Texture2D>("loseScreen");
             CreateBlocks();
-            particles = new List<Texture2D>();
-            particles.Add(Content.Load<Texture2D>("paddleFire"));
+            paddleFire = (Content.Load<Texture2D>("paddleFire"));
+            brokenBlock = (Content.Load<Texture2D>("brokenBlock"));
             ballT = Content.Load<Texture2D>("ballBreakout");
             paddleSound = Content.Load<SoundEffect>("Flamethrower");
             paddleInstance = paddleSound.CreateInstance();
             paddleInstance.IsLooped = true;
             titleSong = Content.Load<Song>("titleSong");
             mainSong = Content.Load<Song>("mainblockTheme");
+            loseSong = Content.Load<Song>("loseSong");
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
         }
@@ -109,32 +113,60 @@ namespace Summative_Breakout
             }
             if (screen == Screen.Game)
             {
+                blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (MediaPlayer.State == MediaState.Stopped)                
                     MediaPlayer.Play(mainSong);
                 keyboardState = Keyboard.GetState();
-                particleEngine.Enabled = false;
+                paddleEngine.Enabled = false;
+                foreach (Block block in blocks)
+                {
+                    if (block.IsAlive && ball.Rect.Intersects(block.Rect))
+                    {
+                        block.Hit();
+                        blockTime = 0;
+                        blockEngine.Enabled = true;
+                        blockEngine.EmitterLocation = new Vector2(block.Rect.Center.X, block.Rect.Center.Y);
+                        blockEngine.EmitterDirection = Vector2.Zero;
+                        if (blockTime >= 0.3)
+                            blockEngine.Enabled = false;
+                    }
+                }
                 if (keyboardState.IsKeyDown(Keys.Left))
                 {
                     paddle.MoveLeft();
                     paddleInstance.Play();
-                    particleEngine.Enabled = true;
-                    particleEngine.EmitterLocation = new Vector2(paddle.Rect.Right, paddle.Rect.Center.Y);
-                    particleEngine.EmitterDirection = new Vector2(3, 0);
+                    paddleEngine.Enabled = true;
+                    paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Right, paddle.Rect.Center.Y);
+                    paddleEngine.EmitterDirection = new Vector2(3, 0);
                 }
                 else if (keyboardState.IsKeyDown(Keys.Right))
                 {
                     paddle.MoveRight();
                     paddleInstance.Play();
-                    particleEngine.Enabled = true;
-                    particleEngine.EmitterLocation = new Vector2(paddle.Rect.Left, paddle.Rect.Center.Y);
-                    particleEngine.EmitterDirection = new Vector2(-3, 0);
+                    paddleEngine.Enabled = true;
+                    paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Left, paddle.Rect.Center.Y);
+                    paddleEngine.EmitterDirection = new Vector2(-3, 0);
                 }
                 else
                     paddleInstance.Stop();
-                particleEngine.Update();
+                ball.Update(paddle, blocks);
+                paddleEngine.Update();
+                blockEngine.Update();
+                if (ball.Rect.Top >= window.Bottom)
+                {
+                    screen = Screen.Lose;
+                    MediaPlayer.Stop();
+                    paddleInstance.Stop(true);
+                }
+            if (screen == Screen.Lose)
+            {
+                resetTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (MediaPlayer.State == MediaState.Stopped)
+                   MediaPlayer.Play(loseSong);
             }
-            base.Update(gameTime);
         }
+            base.Update(gameTime);
+    }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -154,11 +186,16 @@ namespace Summative_Breakout
                 {
                     block.Draw(_spriteBatch);
                 }
-                particleEngine.Draw(_spriteBatch);
+                paddleEngine.Draw(_spriteBatch);
+                blockEngine.Draw(_spriteBatch);
                 paddle.Draw(_spriteBatch);
                 ball.Draw(_spriteBatch);
             }
-            _spriteBatch.End();
+            else if (screen == Screen.Lose)
+            {
+                _spriteBatch.Draw(lose, window, Color.White);
+            }
+                _spriteBatch.End();
             base.Draw(gameTime);
         }
         private void CreateBlocks()

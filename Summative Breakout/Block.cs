@@ -13,20 +13,37 @@ namespace Summative_Breakout
         private Rectangle _rect;
         private Texture2D _texture;
         private Color _color;
+        private bool _isAlive;
 
         public Block(Texture2D texture, Rectangle rect, Color color)
         {
             _texture = texture;
             _rect = rect;
             _color = color;
+            _isAlive = true;
         }
+
         public Rectangle Rect
         {
             get { return _rect; }
         }
+
+        public bool IsAlive
+        {
+            get { return _isAlive; }
+        }
+
+        public void Hit()
+        {
+            _isAlive = false;
+        }
+
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, _rect, _color);
+            if (_isAlive)
+            {
+                spriteBatch.Draw(_texture, _rect, _color);
+            }
         }
     }
 }
