@@ -50,18 +50,19 @@
 #begin blockFont.ttf
 /copy:blockFont.ttf
 
-#begin brokenBlock
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
+#begin blockSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
-/build:brokenBlock
+/build:blockSound.mp3
+
+#begin bounceSound.mp3
+/importer:Mp3Importer
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:bounceSound.mp3
 
 #begin Flamethrower.mp3
 /importer:Mp3Importer
@@ -142,4 +143,24 @@
 /processorParam:Quality=Best
 /processorParam:Version=3.8.5.1
 /build:titleSong.mp3
+
+#begin winScreen.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/processorParam:Version=3.8.5.1
+/build:winScreen.jpg
+
+#begin winSong.mp3
+/importer:Mp3Importer
+/processor:SongProcessor
+/processorParam:Quality=Best
+/processorParam:Version=3.8.5.1
+/build:winSong.mp3
 

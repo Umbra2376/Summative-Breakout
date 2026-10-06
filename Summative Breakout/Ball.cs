@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
@@ -10,13 +11,17 @@ namespace Summative_Breakout
         private Rectangle _location;
         private Vector2 _speed;
         private Rectangle _window;
+        private SoundEffect _soundEffect;
+        private SoundEffectInstance _instance;
 
-        public Ball(Texture2D texture, Rectangle location, Vector2 speed, Rectangle window)
+        public Ball(Texture2D texture, Rectangle location, Vector2 speed, Rectangle window, SoundEffect sound, SoundEffectInstance instance)
         {
             _texture = texture;
             _location = location;
             _speed = speed;
             _window = window;
+            _soundEffect = sound;
+            _instance = instance;
         }
 
         public Rectangle Rect
@@ -33,18 +38,21 @@ namespace Summative_Breakout
             {
                 _location.X = _window.Left;
                 _speed.X *= -1;
+                _instance.Play();
             }
 
             if (_location.Right >= _window.Right)
             {
                 _location.X = _window.Right - _location.Width;
                 _speed.X *= -1;
+                _instance.Play();
             }
 
             if (_location.Top <= _window.Top)
             {
                 _location.Y = _window.Top;
                 _speed.Y *= -1;
+                _instance.Play();
             }
 
             if (_location.Intersects(paddle.Rect) && _speed.Y > 0)
@@ -63,9 +71,12 @@ namespace Summative_Breakout
                 {
                     _speed.X = 3;
                 }
+                _instance.Play();
             }
-            foreach (Block block in blocks)
+            for (int i = 0; i < blocks.Count; i++)
             {
+                Block block = blocks[i];
+
                 if (block.IsAlive && _location.Intersects(block.Rect))
                 {
                     block.Hit();
@@ -75,12 +86,19 @@ namespace Summative_Breakout
                         _speed.X *= -1;
                     else
                         _speed.Y *= -1;
+
+                    blocks.RemoveAt(i);
+
                     return block;
                 }
             }
             return null;
         }
-
+        public void Reset(Rectangle location, Vector2 speed)
+        {
+            _location = location;
+            _speed = speed;
+        }
         public void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(_texture, _location, Color.White);

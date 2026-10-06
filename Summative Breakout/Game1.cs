@@ -20,16 +20,16 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D title, blockT, paddleT, ballT, lose, paddleFire, brokenBlock;
+        Texture2D title, blockT, paddleT, ballT, lose, win, paddleFire, brokenBlock;
         Rectangle window, paddleR, ballR;
         Vector2 ballS = new Vector2(5, -5);
         SpriteFont blockFont;
-        SoundEffect paddleSound;
-        SoundEffectInstance paddleInstance;
-        Song titleSong, mainSong, loseSong;
-        float titleO, resetTime, blockTime;
+        SoundEffect paddleSound, breakSound, bounceSound;
+        SoundEffectInstance paddleInstance, breakInstance, bounceInstance;
+        Song titleSong, mainSong, loseSong, winSong;
+        float titleO, blockTime;
         double titleTime;
-        KeyboardState keyboardState;
+        KeyboardState keyboardState, oldState;
         ParticleEngine paddleEngine, blockEngine;
         List<Block> blocks = new List<Block>();
         Paddle paddle;
@@ -55,7 +55,7 @@ namespace Summative_Breakout
             _graphics.ApplyChanges();
             base.Initialize();
             paddle = new Paddle(paddleT, paddleR, window);
-            ball = new Ball(ballT, ballR, ballS, window);
+            ball = new Ball(ballT, ballR, ballS, window, bounceSound, bounceInstance);
             paddleEngine = new ParticleEngine(paddleFire, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
             blockEngine = new ParticleEngine(brokenBlock, new Vector2(3, 3), false, true);
             blockEngine.TTL = 100;
@@ -71,16 +71,21 @@ namespace Summative_Breakout
             blockFont = Content.Load<SpriteFont>("blockFont");
             blockT = Content.Load<Texture2D>("tile");
             lose = Content.Load<Texture2D>("loseScreen");
-            CreateBlocks();
+            win = Content.Load<Texture2D>("winScreen");
             paddleFire = Content.Load<Texture2D>("paddleFire");
-            brokenBlock = Content.Load<Texture2D>("brokenBlock");
+            brokenBlock = Content.Load<Texture2D>("tile");
             ballT = Content.Load<Texture2D>("ballBreakout");
             paddleSound = Content.Load<SoundEffect>("Flamethrower");
             paddleInstance = paddleSound.CreateInstance();
+            breakSound = Content.Load<SoundEffect>("blockSound");
+            breakInstance = breakSound.CreateInstance();
+            bounceSound = Content.Load<SoundEffect>("bounceSound");
+            bounceInstance = bounceSound.CreateInstance();
             paddleInstance.IsLooped = true;
             titleSong = Content.Load<Song>("titleSong");
             mainSong = Content.Load<Song>("mainblockTheme");
             loseSong = Content.Load<Song>("loseSong");
+            winSong = Content.Load<Song>("winSong");
             MediaPlayer.Volume = 0.6f;
             // TODO: use this.Content to load your game content here
         }
@@ -93,6 +98,8 @@ namespace Summative_Breakout
             // TODO: Add your update logic here
             if (screen == Screen.Title)
             {
+                ball.Reset(new Rectangle(355, 520, 30, 30), new Vector2(5, -5));
+                paddle.Reset(new Rectangle(325, 550, 100, 20));
                 if (MediaPlayer.State != MediaState.Playing)
                 {
                     MediaPlayer.IsRepeating = true;
@@ -105,11 +112,12 @@ namespace Summative_Breakout
                     titleO = titleO == 1 ? 0 : 1;
                     titleTime = 0;
                 }
-                if (keyboardState.IsKeyDown(Keys.Enter))
+                if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
                 {
                     titleTime = 0;
                     screen = Screen.Game;
                     MediaPlayer.Stop();
+                    CreateBlocks();
                 }
             }
             if (screen == Screen.Game)
@@ -149,6 +157,7 @@ namespace Summative_Breakout
                 }
                 if (blockEngine.Enabled)
                 {
+                    breakInstance.Play();
                     blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     if (blockTime >= 0.3f)
                         blockEngine.Enabled = false;
@@ -161,13 +170,30 @@ namespace Summative_Breakout
                     MediaPlayer.Stop();
                     paddleInstance.Stop(true);
                 }
-                if (screen == Screen.Lose)
+                if (blocks.Count == 0)
                 {
-                    resetTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    if (MediaPlayer.State == MediaState.Stopped)
-                        MediaPlayer.Play(loseSong);
+                    screen = Screen.Win;
+                    MediaPlayer.Stop();
                 }
             }
+            if (screen == Screen.Lose)
+            {
+                keyboardState = Keyboard.GetState();
+                if (MediaPlayer.State == MediaState.Stopped)
+                    MediaPlayer.Play(loseSong);
+                if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
+                {
+                    screen = Screen.Title;
+                    MediaPlayer.Stop();
+                }
+            }
+            if (screen == Screen.Win)
+            {
+                keyboardState = Keyboard.GetState();
+                if (MediaPlayer.State == MediaState.Stopped)
+                    MediaPlayer.Play(winSong);
+            }
+            oldState = keyboardState;
             base.Update(gameTime);
         }
 
@@ -197,12 +223,19 @@ namespace Summative_Breakout
             else if (screen == Screen.Lose)
             {
                 _spriteBatch.Draw(lose, window, Color.White);
+                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Orange);
             }
-            _spriteBatch.End();
+            else if (screen == Screen.Win)
+            {
+                _spriteBatch.Draw(win, window, Color.White);
+                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Gold);
+            }
+                _spriteBatch.End();
             base.Draw(gameTime);
         }
         private void CreateBlocks()
         {
+            blocks.Clear();
             int rows = 8;
             int columns = 13;
             int brickWidth = 60;

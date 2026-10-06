@@ -19,11 +19,15 @@ namespace Summative_Breakout
             _texture = texture;
             _rect = rect;
             _window = window;
-            _speed = 6;
+            _speed = 8;
         }
         public Rectangle Rect
         {
             get { return _rect; }
+        }
+        public void Reset(Rectangle location)
+        {
+            _rect = location;
         }
         public void MoveLeft()
         {
