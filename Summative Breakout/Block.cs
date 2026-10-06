@@ -37,6 +37,10 @@ namespace Summative_Breakout
         {
             _isAlive = false;
         }
+        public Color Color
+        {
+            get { return _color; }
+        }
 
         public void Draw(SpriteBatch spriteBatch)
         {
