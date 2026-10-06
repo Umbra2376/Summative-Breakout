@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 
@@ -24,7 +24,7 @@ namespace Summative_Breakout
             get { return _location; }
         }
 
-        public void Update(Paddle paddle, List<Block> blocks)
+        public Block Update(Paddle paddle, List<Block> blocks)
         {
             _location.X += (int)_speed.X;
             _location.Y += (int)_speed.Y;
@@ -69,15 +69,16 @@ namespace Summative_Breakout
                 if (block.IsAlive && _location.Intersects(block.Rect))
                 {
                     block.Hit();
-                    Rectangle intersection = Rectangle.Intersect(_location,block.Rect);
+                    Rectangle intersection = Rectangle.Intersect(_location, block.Rect);
 
                     if (intersection.Width < intersection.Height)
                         _speed.X *= -1;
                     else
                         _speed.Y *= -1;
-                    break;
+                    return block;
                 }
             }
+            return null;
         }
 
         public void Draw(SpriteBatch spriteBatch)
