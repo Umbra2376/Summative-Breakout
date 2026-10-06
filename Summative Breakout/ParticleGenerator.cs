@@ -20,6 +20,7 @@ namespace Particle_Generator
         private bool _enabled;
         private bool _gravityEnabled;
         private int _ttl = 1;
+        private Color _color = Color.White;
 
         public ParticleEngine(Texture2D textures, Vector2 location, bool enabled, bool gravityEnabled)
         {
@@ -38,13 +39,8 @@ namespace Particle_Generator
             Vector2 velocity = new Vector2((float)_generator.NextDouble() * 2 - 1, (float)_generator.NextDouble() * 2 - 1);
             float angle = 0;
             float angularVelocity = 0.1f * (float)(_generator.NextDouble() * 2 - 1);
-            Color color = new Color(
-            (float)_generator.NextDouble(),
-            (float)_generator.NextDouble(),
-            (float)_generator.NextDouble());
             int size = _generator.Next(10, 20);
-            _ttl = 1 + _generator.Next(20);
-            return new Particle(texture, position, velocity, angle, angularVelocity, Color.White, size, _ttl, _gravityEnabled);
+            return new Particle(texture, position, velocity, angle, angularVelocity, _color, size, _ttl, _gravityEnabled);
         }
         public void Draw(SpriteBatch spriteBatch)
         {
@@ -90,6 +86,11 @@ namespace Particle_Generator
         {
             get { return _emitterDirection; }
             set { _emitterDirection = value; }
+        }
+        public Color Color
+        {
+            get { return _color; }
+            set { _color = value; }
         }
     }
 }
