@@ -31,10 +31,10 @@ namespace Summative_Breakout
         double titleTime;
         KeyboardState keyboardState;
         ParticleEngine paddleEngine, blockEngine;
-        List<Block> blocks =  new List<Block>();
+        List<Block> blocks = new List<Block>();
         Paddle paddle;
         Ball ball;
-        
+
         private Screen screen;
         public Game1()
         {
@@ -58,7 +58,8 @@ namespace Summative_Breakout
             ball = new Ball(ballT, ballR, ballS, window);
             paddleEngine = new ParticleEngine(paddleFire, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
             blockEngine = new ParticleEngine(brokenBlock, new Vector2(3, 3), false, true);
-            blockEngine.TTL = 30;
+            blockEngine.TTL = 100;
+            paddleEngine.TTL = 10;
         }
 
         protected override void LoadContent()
@@ -71,8 +72,8 @@ namespace Summative_Breakout
             blockT = Content.Load<Texture2D>("tile");
             lose = Content.Load<Texture2D>("loseScreen");
             CreateBlocks();
-            paddleFire = (Content.Load<Texture2D>("paddleFire"));
-            brokenBlock = (Content.Load<Texture2D>("brokenBlock"));
+            paddleFire = Content.Load<Texture2D>("paddleFire");
+            brokenBlock = Content.Load<Texture2D>("brokenBlock");
             ballT = Content.Load<Texture2D>("ballBreakout");
             paddleSound = Content.Load<SoundEffect>("Flamethrower");
             paddleInstance = paddleSound.CreateInstance();
@@ -114,23 +115,10 @@ namespace Summative_Breakout
             if (screen == Screen.Game)
             {
                 blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (MediaPlayer.State == MediaState.Stopped)                
+                if (MediaPlayer.State == MediaState.Stopped)
                     MediaPlayer.Play(mainSong);
                 keyboardState = Keyboard.GetState();
                 paddleEngine.Enabled = false;
-                foreach (Block block in blocks)
-                {
-                    if (block.IsAlive && ball.Rect.Intersects(block.Rect))
-                    {
-                        block.Hit();
-                        blockTime = 0;
-                        blockEngine.Enabled = true;
-                        blockEngine.EmitterLocation = new Vector2(block.Rect.Center.X, block.Rect.Center.Y);
-                        blockEngine.EmitterDirection = Vector2.Zero;
-                        if (blockTime >= 0.3)
-                            blockEngine.Enabled = false;
-                    }
-                }
                 if (keyboardState.IsKeyDown(Keys.Left))
                 {
                     paddle.MoveLeft();
@@ -149,7 +137,22 @@ namespace Summative_Breakout
                 }
                 else
                     paddleInstance.Stop();
-                ball.Update(paddle, blocks);
+                Block hitBlock = ball.Update(paddle, blocks);
+
+                if (hitBlock != null)
+                {
+                    blockEngine.Enabled = true;
+                    blockEngine.EmitterLocation = new Vector2(hitBlock.Rect.Center.X, hitBlock.Rect.Center.Y);
+                    blockEngine.EmitterDirection = Vector2.Zero;
+                    blockEngine.Color = hitBlock.Color;
+                    blockTime = 0;
+                }
+                if (blockEngine.Enabled)
+                {
+                    blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (blockTime >= 0.3f)
+                        blockEngine.Enabled = false;
+                }
                 paddleEngine.Update();
                 blockEngine.Update();
                 if (ball.Rect.Top >= window.Bottom)
@@ -158,15 +161,15 @@ namespace Summative_Breakout
                     MediaPlayer.Stop();
                     paddleInstance.Stop(true);
                 }
-            if (screen == Screen.Lose)
-            {
-                resetTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (MediaPlayer.State == MediaState.Stopped)
-                   MediaPlayer.Play(loseSong);
+                if (screen == Screen.Lose)
+                {
+                    resetTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (MediaPlayer.State == MediaState.Stopped)
+                        MediaPlayer.Play(loseSong);
+                }
             }
-        }
             base.Update(gameTime);
-    }
+        }
 
         protected override void Draw(GameTime gameTime)
         {
@@ -195,7 +198,7 @@ namespace Summative_Breakout
             {
                 _spriteBatch.Draw(lose, window, Color.White);
             }
-                _spriteBatch.End();
+            _spriteBatch.End();
             base.Draw(gameTime);
         }
         private void CreateBlocks()
