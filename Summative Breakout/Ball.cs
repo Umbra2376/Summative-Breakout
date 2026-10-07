@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 
 namespace Summative_Breakout
@@ -13,6 +14,7 @@ namespace Summative_Breakout
         private Rectangle _window;
         private SoundEffect _soundEffect;
         private SoundEffectInstance _instance;
+        private Random _generator;
 
         public Ball(Texture2D texture, Rectangle location, Vector2 speed, Rectangle window, SoundEffect sound, SoundEffectInstance instance)
         {
@@ -22,6 +24,7 @@ namespace Summative_Breakout
             _window = window;
             _soundEffect = sound;
             _instance = instance;
+            _generator = new Random();
         }
 
         public Rectangle Rect
@@ -65,11 +68,11 @@ namespace Summative_Breakout
 
                 if (ballCenter < paddleCenter)
                 {
-                    _speed.X = -3;
+                    _speed.X = (float)(_generator.NextDouble() * -10 + 1);
                 }
                 else
                 {
-                    _speed.X = 3;
+                    _speed.X = (float)(_generator.NextDouble() * 10 - 1);
                 }
                 _instance.Play();
             }

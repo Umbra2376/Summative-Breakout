@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using Particle_Generator;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -20,18 +21,21 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D title, blockT, paddleT, ballT, lose, win, paddleFire, brokenBlock;
+        Texture2D title, blockT, paddleT, ballT, lose, win, paddleFire, brokenBlock, star, blackHole;
         Rectangle window, paddleR, ballR;
-        Vector2 ballS = new Vector2(5, -5);
-        SpriteFont blockFont;
+        Vector2 ballS = new Vector2(5, -5), timeR, scoreR, scoreGameL, timeGameL;
+        SpriteFont blockFont, scoreFont;
         SoundEffect paddleSound, breakSound, bounceSound;
         SoundEffectInstance paddleInstance, breakInstance, bounceInstance;
         Song titleSong, mainSong, loseSong, winSong;
-        float titleO, blockTime;
+        float titleO, blockTime, totalTime;
+        int score;
         double titleTime;
         KeyboardState keyboardState, oldState;
         ParticleEngine paddleEngine, blockEngine;
         List<Block> blocks = new List<Block>();
+        List<Texture2D> stars = new List<Texture2D>();
+        List<Rectangle> starsR = new List<Rectangle>();
         Paddle paddle;
         Ball ball;
 
@@ -47,9 +51,13 @@ namespace Summative_Breakout
         {
             // TODO: Add your initialization logic here
             screen = Screen.Title;
-            window = new Rectangle(0, 0, 845, 600);
+            window = new Rectangle(0, 0, 845, 750);
             paddleR = new Rectangle(325, 550, 100, 20);
             ballR = new Rectangle(355, 520, 30, 30);
+            timeR = new Vector2(50, 10);
+            scoreR = new Vector2(50, 60);
+            timeGameL = new Vector2(50, 650);
+            scoreGameL = new Vector2(50, 690);
             _graphics.PreferredBackBufferWidth = window.Width;
             _graphics.PreferredBackBufferHeight = window.Height;
             _graphics.ApplyChanges();
@@ -67,8 +75,11 @@ namespace Summative_Breakout
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             title = Content.Load<Texture2D>("blockBreakerTitle");
+            stars.Add(Content.Load<Texture2D>("circle"));
+            blackHole = Content.Load<Texture2D>("blackHole");
             paddleT = Content.Load<Texture2D>("paddle");
             blockFont = Content.Load<SpriteFont>("blockFont");
+            scoreFont = Content.Load<SpriteFont>("timeFont");
             blockT = Content.Load<Texture2D>("tile");
             lose = Content.Load<Texture2D>("loseScreen");
             win = Content.Load<Texture2D>("winScreen");
@@ -98,6 +109,7 @@ namespace Summative_Breakout
             // TODO: Add your update logic here
             if (screen == Screen.Title)
             {
+                totalTime = 0;
                 ball.Reset(new Rectangle(355, 520, 30, 30), new Vector2(5, -5));
                 paddle.Reset(new Rectangle(325, 550, 100, 20));
                 if (MediaPlayer.State != MediaState.Playing)
@@ -122,9 +134,14 @@ namespace Summative_Breakout
             }
             if (screen == Screen.Game)
             {
+                score = 104 - blocks.Count;
+                totalTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (MediaPlayer.State == MediaState.Stopped)
+                {
                     MediaPlayer.Play(mainSong);
+                    MediaPlayer.IsRepeating = true;
+                }
                 keyboardState = Keyboard.GetState();
                 paddleEngine.Enabled = false;
                 if (keyboardState.IsKeyDown(Keys.Left))
@@ -133,7 +150,7 @@ namespace Summative_Breakout
                     paddleInstance.Play();
                     paddleEngine.Enabled = true;
                     paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Right, paddle.Rect.Center.Y);
-                    paddleEngine.EmitterDirection = new Vector2(3, 0);
+                    paddleEngine.EmitterDirection = new Vector2(5, 0);
                 }
                 else if (keyboardState.IsKeyDown(Keys.Right))
                 {
@@ -141,7 +158,7 @@ namespace Summative_Breakout
                     paddleInstance.Play();
                     paddleEngine.Enabled = true;
                     paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Left, paddle.Rect.Center.Y);
-                    paddleEngine.EmitterDirection = new Vector2(-3, 0);
+                    paddleEngine.EmitterDirection = new Vector2(-5, 0);
                 }
                 else
                     paddleInstance.Stop();
@@ -192,6 +209,11 @@ namespace Summative_Breakout
                 keyboardState = Keyboard.GetState();
                 if (MediaPlayer.State == MediaState.Stopped)
                     MediaPlayer.Play(winSong);
+                if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
+                {
+                    screen = Screen.Title;
+                    MediaPlayer.Stop();
+                }
             }
             oldState = keyboardState;
             base.Update(gameTime);
@@ -211,6 +233,8 @@ namespace Summative_Breakout
             }
             else if (screen == Screen.Game)
             {
+                _spriteBatch.DrawString(scoreFont, "Score: " + score, scoreGameL, Color.White);
+                _spriteBatch.DrawString(scoreFont, "Time: " + totalTime.ToString("F2") + "(sec)", timeGameL, Color.White);
                 foreach (Block block in blocks)
                 {
                     block.Draw(_spriteBatch);
@@ -224,11 +248,15 @@ namespace Summative_Breakout
             {
                 _spriteBatch.Draw(lose, window, Color.White);
                 _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Orange);
+                _spriteBatch.DrawString(scoreFont, "You scored: " + score, scoreR, Color.White);
+                _spriteBatch.DrawString(scoreFont, "You lasted: " + totalTime.ToString("F2") + "(sec)", timeR, Color.White);
             }
             else if (screen == Screen.Win)
             {
                 _spriteBatch.Draw(win, window, Color.White);
                 _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Gold);
+                _spriteBatch.DrawString(scoreFont, "You  beat  all  104  t iles!", scoreR, Color.White);
+                _spriteBatch.DrawString(scoreFont, "You  beat  it  in: " + totalTime.ToString("F2") + "(sec)", timeR, Color.White);
             }
                 _spriteBatch.End();
             base.Draw(gameTime);
@@ -259,6 +287,10 @@ namespace Summative_Breakout
                     blocks.Add(block);
                 }
             }
+        }
+        private void CreateStars()
+        {
+
         }
     }
 }
