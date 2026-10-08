@@ -13,17 +13,15 @@ namespace Summative_Breakout
         private Vector2 _speed;
         private Rectangle _window;
         private SoundEffect _soundEffect;
-        private SoundEffectInstance _instance;
         private Random _generator;
 
-        public Ball(Texture2D texture, Rectangle location, Vector2 speed, Rectangle window, SoundEffect sound, SoundEffectInstance instance)
+        public Ball(Texture2D texture, Rectangle location, Vector2 speed, Rectangle window, SoundEffect sound)
         {
             _texture = texture;
             _location = location;
             _speed = speed;
             _window = window;
             _soundEffect = sound;
-            _instance = instance;
             _generator = new Random();
         }
 
@@ -41,40 +39,49 @@ namespace Summative_Breakout
             {
                 _location.X = _window.Left;
                 _speed.X *= -1;
-                _instance.Play();
+                _soundEffect.Play();
             }
 
             if (_location.Right >= _window.Right)
             {
                 _location.X = _window.Right - _location.Width;
                 _speed.X *= -1;
-                _instance.Play();
+                _soundEffect.Play();
             }
 
             if (_location.Top <= _window.Top)
             {
                 _location.Y = _window.Top;
                 _speed.Y *= -1;
-                _instance.Play();
+                _soundEffect.Play();
             }
 
-            if (_location.Intersects(paddle.Rect) && _speed.Y > 0)
+            if (_location.Intersects(paddle.Rect))
             {
-                _location.Y = paddle.Rect.Top - _location.Height;
-                _speed.Y *= -1;
-
-                float paddleCenter = paddle.Rect.Center.X;
-                float ballCenter = _location.Center.X;
-
-                if (ballCenter < paddleCenter)
+                if (_speed.Y > 0 && _location.Bottom <= paddle.Rect.Top + 10)
                 {
-                    _speed.X = (float)(_generator.NextDouble() * -10 + 1);
+                    _location.Y = paddle.Rect.Top - _location.Height;
+                    _speed.Y *= -1;
+
+                    float paddleCenter = paddle.Rect.Center.X;
+                    float ballCenter = _location.Center.X;
+
+                    if (ballCenter < paddleCenter)
+                    {
+                        _speed.X = (float)(_generator.NextDouble() * -10 + 1);
+                    }
+                    else
+                    {
+                        _speed.X = (float)(_generator.NextDouble() * 10 - 1);
+                    }
+
+                    _soundEffect.Play();
                 }
-                else
+                else if (_location.Right > paddle.Rect.Left && _location.Left < paddle.Rect.Right)
                 {
-                    _speed.X = (float)(_generator.NextDouble() * 10 - 1);
+                    _speed.Y = 5;
+                    _speed.X *= -10;
                 }
-                _instance.Play();
             }
             for (int i = 0; i < blocks.Count; i++)
             {

@@ -21,12 +21,12 @@ namespace Summative_Breakout
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        Texture2D title, blockT, paddleT, ballT, lose, win, paddleFire, brokenBlock, star, blackHole;
+        Texture2D title, blockT, paddleT, ballT, lose, win, paddleFire, brokenBlock;
         Rectangle window, paddleR, ballR;
         Vector2 ballS = new Vector2(5, -5), timeR, scoreR, scoreGameL, timeGameL;
         SpriteFont blockFont, scoreFont;
         SoundEffect paddleSound, breakSound, bounceSound;
-        SoundEffectInstance paddleInstance, breakInstance, bounceInstance;
+        SoundEffectInstance paddleInstance, breakInstance;
         Song titleSong, mainSong, loseSong, winSong;
         float titleO, blockTime, totalTime;
         int score;
@@ -38,6 +38,7 @@ namespace Summative_Breakout
         List<Rectangle> starsR = new List<Rectangle>();
         Paddle paddle;
         Ball ball;
+        Random starGenerator = new Random();
 
         private Screen screen;
         public Game1()
@@ -63,7 +64,7 @@ namespace Summative_Breakout
             _graphics.ApplyChanges();
             base.Initialize();
             paddle = new Paddle(paddleT, paddleR, window);
-            ball = new Ball(ballT, ballR, ballS, window, bounceSound, bounceInstance);
+            ball = new Ball(ballT, ballR, ballS, window, bounceSound);
             paddleEngine = new ParticleEngine(paddleFire, new Vector2(paddle.Rect.Center.X, paddle.Rect.Center.Y), false, false);
             blockEngine = new ParticleEngine(brokenBlock, new Vector2(3, 3), false, true);
             blockEngine.TTL = 100;
@@ -76,7 +77,6 @@ namespace Summative_Breakout
 
             title = Content.Load<Texture2D>("blockBreakerTitle");
             stars.Add(Content.Load<Texture2D>("circle"));
-            blackHole = Content.Load<Texture2D>("blackHole");
             paddleT = Content.Load<Texture2D>("paddle");
             blockFont = Content.Load<SpriteFont>("blockFont");
             scoreFont = Content.Load<SpriteFont>("timeFont");
@@ -91,13 +91,13 @@ namespace Summative_Breakout
             breakSound = Content.Load<SoundEffect>("blockSound");
             breakInstance = breakSound.CreateInstance();
             bounceSound = Content.Load<SoundEffect>("bounceSound");
-            bounceInstance = bounceSound.CreateInstance();
             paddleInstance.IsLooped = true;
             titleSong = Content.Load<Song>("titleSong");
             mainSong = Content.Load<Song>("mainblockTheme");
             loseSong = Content.Load<Song>("loseSong");
             winSong = Content.Load<Song>("winSong");
             MediaPlayer.Volume = 0.6f;
+            CreateStars();
             // TODO: use this.Content to load your game content here
         }
 
@@ -114,7 +114,6 @@ namespace Summative_Breakout
                 paddle.Reset(new Rectangle(325, 550, 100, 20));
                 if (MediaPlayer.State != MediaState.Playing)
                 {
-                    MediaPlayer.IsRepeating = true;
                     MediaPlayer.Play(titleSong);
                 }
                 keyboardState = Keyboard.GetState();
@@ -129,19 +128,18 @@ namespace Summative_Breakout
                     titleTime = 0;
                     screen = Screen.Game;
                     MediaPlayer.Stop();
+
+                    MediaPlayer.IsRepeating = true;
+                    MediaPlayer.Play(mainSong);
+
                     CreateBlocks();
                 }
             }
             if (screen == Screen.Game)
             {
-                score = 104 - blocks.Count;
+                score = 96 - blocks.Count;
                 totalTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                if (MediaPlayer.State == MediaState.Stopped)
-                {
-                    MediaPlayer.Play(mainSong);
-                    MediaPlayer.IsRepeating = true;
-                }
                 keyboardState = Keyboard.GetState();
                 paddleEngine.Enabled = false;
                 if (keyboardState.IsKeyDown(Keys.Left))
@@ -150,7 +148,7 @@ namespace Summative_Breakout
                     paddleInstance.Play();
                     paddleEngine.Enabled = true;
                     paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Right, paddle.Rect.Center.Y);
-                    paddleEngine.EmitterDirection = new Vector2(5, 0);
+                    paddleEngine.EmitterDirection = new Vector2(8, 0);
                 }
                 else if (keyboardState.IsKeyDown(Keys.Right))
                 {
@@ -158,12 +156,11 @@ namespace Summative_Breakout
                     paddleInstance.Play();
                     paddleEngine.Enabled = true;
                     paddleEngine.EmitterLocation = new Vector2(paddle.Rect.Left, paddle.Rect.Center.Y);
-                    paddleEngine.EmitterDirection = new Vector2(-5, 0);
+                    paddleEngine.EmitterDirection = new Vector2(-8, 0);
                 }
                 else
                     paddleInstance.Stop();
                 Block hitBlock = ball.Update(paddle, blocks);
-
                 if (hitBlock != null)
                 {
                     blockEngine.Enabled = true;
@@ -172,12 +169,33 @@ namespace Summative_Breakout
                     blockEngine.Color = hitBlock.Color;
                     blockTime = 0;
                 }
+                if (blocks.Count == 0)
+                {
+                    screen = Screen.Win;
+                    MediaPlayer.Stop();
+                    base.Update(gameTime);
+                    return;
+                }
                 if (blockEngine.Enabled)
                 {
                     breakInstance.Play();
                     blockTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     if (blockTime >= 0.3f)
                         blockEngine.Enabled = false;
+                }
+                for (int i = 0; i < starsR.Count; i++)
+                {
+                    Rectangle starRect = starsR[i];
+
+                    starRect.Y += 3;
+
+                    if (starRect.Top >= window.Bottom)
+                    {
+                        starRect.Y = -starRect.Height;
+                        starRect.X = starGenerator.Next(0, window.Width);
+                    }
+
+                    starsR[i] = starRect;
                 }
                 paddleEngine.Update();
                 blockEngine.Update();
@@ -186,11 +204,6 @@ namespace Summative_Breakout
                     screen = Screen.Lose;
                     MediaPlayer.Stop();
                     paddleInstance.Stop(true);
-                }
-                if (blocks.Count == 0)
-                {
-                    screen = Screen.Win;
-                    MediaPlayer.Stop();
                 }
             }
             if (screen == Screen.Lose)
@@ -216,7 +229,6 @@ namespace Summative_Breakout
                 }
             }
             oldState = keyboardState;
-            base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
@@ -229,10 +241,14 @@ namespace Summative_Breakout
             if (screen == Screen.Title)
             {
                 _spriteBatch.Draw(title, window, Color.White);
-                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.White * titleO);
+                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 550), Color.White * titleO);
             }
             else if (screen == Screen.Game)
             {
+                foreach (Rectangle starRect in starsR)
+                {
+                    _spriteBatch.Draw(stars[0], starRect, Color.White * 0.5f);
+                }
                 _spriteBatch.DrawString(scoreFont, "Score: " + score, scoreGameL, Color.White);
                 _spriteBatch.DrawString(scoreFont, "Time: " + totalTime.ToString("F2") + "(sec)", timeGameL, Color.White);
                 foreach (Block block in blocks)
@@ -247,15 +263,15 @@ namespace Summative_Breakout
             else if (screen == Screen.Lose)
             {
                 _spriteBatch.Draw(lose, window, Color.White);
-                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Orange);
+                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 550), Color.Orange);
                 _spriteBatch.DrawString(scoreFont, "You scored: " + score, scoreR, Color.White);
-                _spriteBatch.DrawString(scoreFont, "You lasted: " + totalTime.ToString("F2") + "(sec)", timeR, Color.White);
+                _spriteBatch.DrawString(scoreFont, "You last ed: " + totalTime.ToString("F2") + "(sec)", timeR, Color.White);
             }
             else if (screen == Screen.Win)
             {
                 _spriteBatch.Draw(win, window, Color.White);
-                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 500), Color.Gold);
-                _spriteBatch.DrawString(scoreFont, "You  beat  all  104  t iles!", scoreR, Color.White);
+                _spriteBatch.DrawString(blockFont, "Press ENTER", new Vector2(70, 550), Color.Gold);
+                _spriteBatch.DrawString(scoreFont, "You  beat  all  96  t iles!", scoreR, Color.White);
                 _spriteBatch.DrawString(scoreFont, "You  beat  it  in: " + totalTime.ToString("F2") + "(sec)", timeR, Color.White);
             }
                 _spriteBatch.End();
@@ -265,7 +281,7 @@ namespace Summative_Breakout
         {
             blocks.Clear();
             int rows = 8;
-            int columns = 13;
+            int columns = 12;
             int brickWidth = 60;
             int brickHeight = 25;
             int spacing = 10;
@@ -290,7 +306,19 @@ namespace Summative_Breakout
         }
         private void CreateStars()
         {
+            starsR.Clear();
 
+            Random random = new Random();
+
+            for (int i = 0; i < 80; i++)
+            {
+                int size = random.Next(2, 6);
+
+                int x = random.Next(0, window.Width);
+                int y = random.Next(0, window.Height);
+
+                starsR.Add(new Rectangle(x, y, size, size));
         }
+    }
     }
 }
